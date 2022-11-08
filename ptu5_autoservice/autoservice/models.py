@@ -47,6 +47,16 @@ class Order(models.Model):
     total = models.DecimalField(_("total amount"), max_digits=18, decimal_places=2, default=0)
     date = models.DateField(_("date"), auto_now_add=True)
 
+    def get_total(self):
+        total = 0
+        for line in self.order_lines.all():
+            total += line.total
+        return total
+
+    def save(self, *args, **kwargs):
+        self.total = self.get_total()
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"{self.date}: {self.total}"
 
@@ -66,6 +76,10 @@ class OrderLine(models.Model):
     )
     quantity = models.IntegerField(_("quantity"), default=1)
     price = models.DecimalField(_("price"), max_digits=18, decimal_places=2)
+
+    @property
+    def total(self):
+        return self.quantity * self.price
 
     def __str__(self) -> str:
         return f"{self.service.name}: {self.quantity} x {self.price}"
