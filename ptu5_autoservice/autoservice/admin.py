@@ -1,95 +1,36 @@
-from django import forms
-from django.contrib.auth.models import User
-from . import models
 from django.contrib import admin
-
-class CustomerUserForm(forms.ModelForm):
-    class Meta:
-        model=User
-        fields=['first_name','last_name','username','password']
-        widgets = {
-        'password': forms.PasswordInput()
-        }
-
-class CustomerForm(forms.ModelForm):
-    class Meta:
-        model=models.Customer
-        fields=['address','mobile','profile_pic']
+from . import models
 
 
-class MechanicUserForm(forms.ModelForm):
-    class Meta:
-        model=User
-        fields=['first_name','last_name','username','password']
-        widgets = {
-        'password': forms.PasswordInput()
-        }
-
-class MechanicForm(forms.ModelForm):
-    class Meta:
-        model=models.Mechanic
-        fields=['address','mobile','profile_pic','skill']
-
-class MechanicSalaryForm(forms.Form):
-    salary=forms.IntegerField();
+class OrderLineAdmin(admin.ModelAdmin):
+    list_display = ('service', 'quantity', 'price', 'total', 'order')
+    ordering = ('order', 'id')
+    list_filter = ('order', )
 
 
-class RequestForm(forms.ModelForm):
-    class Meta:
-        model=models.Request
-        fields=['category','vehicle_no','vehicle_name','vehicle_model','vehicle_brand','problem_description']
-        widgets = {
-        'problem_description':forms.Textarea(attrs={'rows': 3, 'cols': 30})
-        }
-
-class AdminRequestForm(forms.Form):
-    #to_field_name value will be stored when form is submitted.....__str__ method of customer model will be shown there in html
-    customer=forms.ModelChoiceField(queryset=models.Customer.objects.all(),empty_label="Customer Name",to_field_name='id')
-    mechanic=forms.ModelChoiceField(queryset=models.Mechanic.objects.all(),empty_label="Mechanic Name",to_field_name='id')
-    cost=forms.IntegerField()
-
-class AdminApproveRequestForm(forms.Form):
-    mechanic=forms.ModelChoiceField(queryset=models.Mechanic.objects.all(),empty_label="Mechanic Name",to_field_name='id')
-    cost=forms.IntegerField()
-    stat=(('Pending','Pending'),('Approved','Approved'),('Released','Released'))
-    status=forms.ChoiceField( choices=stat)
+class OrderLineInline(admin.TabularInline):
+    model = models.OrderLine
+    extra = 0
 
 
-class UpdateCostForm(forms.Form):
-    cost=forms.IntegerField()
-
-class MechanicUpdateStatusForm(forms.Form):
-    stat=(('Approved','Approved'),('Repairing','Repairing'),('Repairing Done','Repairing Done'))
-    status=forms.ChoiceField( choices=stat)
-
-class FeedbackForm(forms.ModelForm):
-    class Meta:
-        model=models.Feedback
-        fields=['by','message']
-        widgets = {
-        'message':forms.Textarea(attrs={'rows': 6, 'cols': 30})
-        }
-
-#for Attendance related form
-presence_choices=(('Present','Present'),('Absent','Absent'))
-class AttendanceForm(forms.Form):
-    present_status=forms.ChoiceField( choices=presence_choices)
-    date=forms.DateField()
-
-class AskDateForm(forms.Form):
-    date=forms.DateField()
+class OrderAdmin(admin.ModelAdmin):
+    inlines = (OrderLineInline,)
+    list_filter = ('date', 'status')
+    list_display = ('id', 'date', 'total', 'car')
 
 
-#for contact us page
-class ContactusForm(forms.Form):
-    Name = forms.CharField(max_length=30)
-    Email = forms.EmailField()
-    Message = forms.CharField(max_length=500,widget=forms.Textarea(attrs={'rows': 3, 'cols': 30}))
-
-admin.site.register(models.Customer, )
-admin.site.register(models.Mechanic)
-admin.site.register(models.Request,)
-admin.site.register(models.Attendance,)
-admin.site.register(models.Feedback,)
+class CarAdmin(admin.ModelAdmin):
+    list_display = ('client', 'car_model', 'plate', 'vin')
+    list_filter = ('client', 'car_model')
+    search_fields = ('vin', 'plate')
 
 
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price')
+
+
+admin.site.register(models.Car, CarAdmin)
+admin.site.register(models.CarModel)
+admin.site.register(models.Service, ServiceAdmin)
+admin.site.register(models.Order, OrderAdmin)
+admin.site.register(models.OrderLine, OrderLineAdmin)
